@@ -297,8 +297,8 @@ cd $files
 lxc file push ./mk-cn1-environment.sh cn1/home/$USER/
 
 # push the 2 xrdp .DEB files to cn1
-lxc file push ./xrdp.deb cn1/home/$USER/
-lxc file push ./x11rdp.deb cn1/home/$USER/
+#lxc file push ./xrdp.deb cn1/home/$USER/
+#lxc file push ./x11rdp.deb cn1/home/$USER/
 
 # push the xrdp pulseaudio drivers into the containers
 lxc file push ./module-xrdp*.so   cn1/home/$USER/
@@ -326,7 +326,7 @@ lxc exec cn1 -- /bin/bash -c "chmod +x /home/$USER/*.sh"
 
 # on cn1
 lxc exec cn1 -- /bin/bash -c "chown $USER:$USER /home/$USER/*.sh"
-lxc exec cn1 -- /bin/bash -c "chown $USER:$USER /home/$USER/*.deb"
+
 
 #--------------------------------------------------------------------------------------------
 # make sure the Installing user is part of all the right Pulseaudio groups on the Host/Server

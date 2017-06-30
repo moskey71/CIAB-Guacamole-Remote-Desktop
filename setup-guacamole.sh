@@ -7,7 +7,7 @@
 # http://chari.titanium.ee/script-to-install-guacamole/
 # 
 # Guacamole installation
-# Supports Ubuntu 14.04,15.10 and Debian wheezy,jessie
+# Supports Ubuntu 16.04 
 # 32 and 64 bit
 # Script to be run as sudo/root
 # ver 1.5
@@ -20,7 +20,10 @@
  
 # Variables for guacamole/mysql connector versions are set here.  As of 3/10/2016 these are the latest versions.
 
-GUAC_VER=0.9.9
+# note:  the guac_ver MUST match the version of the guacamole.war file you want to use that you find on the
+#        site:  http://sourceforge.net/projects/guacamole/files/current/binary/
+
+GUAC_VER=0.9.12-incubating
 MYSQL_CONNECTOR_VERSION=5.1.38
 
 # enable install of new PPAs by adding add-apt-repository capablity to apt-get
@@ -144,10 +147,22 @@ apt install ntp build-essential libcairo2-dev libpng12-dev libossp-uuid-dev libj
 apt install libfreerdp-dev libpango1.0-dev libssh2-1-dev libtelnet-dev libvncserver-dev libpulse-dev libssl-dev libvorbis-dev -y
 apt install default-jdk debconf-utils fail2ban -y
  
+
+#Install Stuff
+apt-get -y install libavcodec-dev libavutil-dev libswscale-dev libwebp-dev tomcat8 freerdp ghostscript jq wget curl
+
+
+echo "Installing prereqs for compiling xrdp..."
+echo "----------------------------------------"
+apt -y install libx11-dev libxfixes-dev libssl-dev libpam0g-dev libtool libjpeg-dev 
+apt -y install flex bison gettext autoconf libxml-parser-perl libfuse-dev xsltproc libxrandr-dev python-libxml2 
+apt -y install nasm xserver-xorg-dev fuse git 
+
+
 #MySQL install with preset password stored in variable MYSQL_ROOT_PASSWD
 echo mysql-server mysql-server/root_password password $MYSQL_ROOT_PASSWD | debconf-set-selections
 echo mysql-server mysql-server/root_password_again password $MYSQL_ROOT_PASSWD | debconf-set-selections
-apt install mysql-server -y
+apt install mysql-server mysql-client mysql-common mysql-utilities -y
 
 # just in case any files failed to install lets run --fix-missing to try to correct it
 apt install --fix-missing

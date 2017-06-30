@@ -135,34 +135,67 @@ cp ./module-xrdp*.so   /usr/lib/pulse-8.0/modules
 
 
 #============================================================================================================
-# now install the .DEB files which should have been included in the .tar.gz file containing this build script
-# and which should be in the same directory the script was in...
+# The new XRDP 0.9.12 is now the newest also there is no longer an x11rdp it has been replaced
+# by a module called "xorgxrdp" so we will git them both, build them and install them here
 
-dpkg -i ./xrdp.deb
-dpkg -i ./x11rdp.deb
 
-# append the load-module statements for xrdp to the end of /etc/pulse/default.pa
-# then comment out the /etc/xrdp/sesman.ini line that sets the PULSE_SERVER= statement for the users
-# since we do NOT want xrdp's default.pa file pre-empting the pulseaudio default.pa file or the pulseaudio tcp
-# module will never get loaded.
+##################################################################
+#Step 1 - Obtain xrdp packages 
+################################################################## 
+
+#-Go to your Download folder
+echo "Moving to the ~/Download folders..."
+echo "-----------------------------------"
+cd $files
+
+#Download the xrdp latest files
+echo "Ready to start the download of xrdp package"
+echo "-------------------------------------------"
+git clone https://github.com/neutrinolabs/xrdp.git
+
+##################################################################
+#Step 2 - compiling xrdp packages
+################################################################## 
+
+echo "Installing and compiling xrdp..."
+echo "--------------------------------"
+cd $files/xrdp
+sudo ./bootstrap
+# We can enable more options -- Check Documentation
+sudo ./configure --enable-fuse --enable-jpeg
+sudo make
+sudo make install
+
+##################################################################
+#Step 3 - compiling xorgxrdp packages
+################################################################## 
+
+cd $files
+git clone https://github.com/neutrinolabs/xorgxrdp.git
+
+
+cd $files/xorgxrdp 
+sudo ./bootstrap 
+sudo ./configure 
+sudo make
+sudo make install
 
 
 #=========================================================================================================================
-# xrdp has some problem starting with systemd so I am taking a shortcut & just deleting those system xrdp service files... 
-# that will force xrdp to be started by Upstart instead
-#
-# NOTE: you MAY see a SystemD ERROR in the terminal related to xrdp ... you can ignore it as we will
-#       be setting xrdp to start using Upstart NOT SystemD...
+# enable the xrdp and xrdp-sesman systemd services so xrdp starts up when ubuntu boots
 
-rm /lib/systemd/system/xrdp*
+sudo systemctl enable xrdp.service
+sudo systemctl enable xrdp-sesman.service
 
-#---------------------------------------------------------------------------------------------
-# copy the CIAB logo to /usr/local/share/xrdp so it will be displayed on the xrdp login screen
+# rm /lib/systemd/system/xrdp*
+
+#-----------------------------------------------------------------------------------------------------------------
+# **ignore for now ** copy the CIAB logo to /usr/local/share/xrdp so it will be displayed on the xrdp login screen
 # first make sure the directory exists... it should but just in case
 
 cd $files
-mkdir /usr/local/share/xrdp
-cp ./ciab-logo.bmp /usr/local/share/xrdp/ciab-logo.bmp
+# mkdir /usr/local/share/xrdp
+# cp ./ciab-logo.bmp /usr/local/share/xrdp/ciab-logo.bmp
 
 
 #====================================================================================================

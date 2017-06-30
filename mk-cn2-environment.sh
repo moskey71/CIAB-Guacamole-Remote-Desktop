@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#========================================================================================================================
-# mk-cn1-environment.sh 
+#========================================================================================================================"
+# mk-cn2-environment.sh 
 #
 # by brian mullan (bmullan.mail@gmail.com)
 #
@@ -11,9 +11,7 @@
 # Install a local Ubuntu-Mate Desktop Environment (DE) into a VM or an LXC container
 # Install misc useful apps/tools for future users of this DE container
 #
-# Installation Notes:
-#
-# This will take 10-20 minutes depending on speed of the host PC/server
+# Note: this will take 5-10 minutes depending on speed of host PC/server
 #
 #
 #========================================================================================================================
@@ -36,19 +34,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-#========================================================================================================================
+#======================================================================================================================="
 
 #
 #
 #
-read -p "Press any key to install the Ubuntu-MATE Desktop Environment into LXC container named cn1..."
+read -p "Press any key to use LXD to create a Clone/Copy of the CN1 (Ubuntu-Mate) Desktop Environment into container named cn2..."
 #
 #
-#-----------------------------------------------------------------------------------------------------------------
-# NOTE: all of the following script will be executed in the LXC containers created not on the HOST
-#-----------------------------------------------------------------------------------------------------------------
+#
+#
 
-# NOTE:  the setup-lxd.sh script will have passed a UserID parameter to this script we need to save that for use later
+# NOTE: the setup-lxd.sh script will have passed 1 parameter to this script and that is the USER id we need to save it for later
 
 userID=$1
 
@@ -58,18 +55,12 @@ userID=$1
 # add Canonical Partner repositories
 
 echo "deb http://archive.canonical.com/ubuntu xenial partner" | sudo tee -a /etc/apt/sources.list
-echo  "deb-src http://archive.canonical.com/ubuntu xenial partner" | sudo tee -a /etc/apt/sources.list
+echo "deb-src http://archive.canonical.com/ubuntu xenial partner" | sudo tee -a /etc/apt/sources.list
 echo "deb http://us.archive.ubuntu.com/ubuntu/ xenial-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
 echo "deb-src http://us.archive.ubuntu.com/ubuntu/ xenial-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
 
 sudo apt update
 sudo apt upgrade -y
-
-echo "Installing prereqs for compiling xrdp..."
-echo "----------------------------------------"
-sudo apt install libx11-dev libxfixes-dev libssl-dev libpam0g-dev libtool libjpeg-dev -y
-sudo apt install flex bison gettext autoconf libxml-parser-perl libfuse-dev xsltproc libxrandr-dev python-libxml2 -y
-sudo apt install nasm xserver-xorg-dev fuse git -y
 
 #======================================================================================================
 
@@ -81,27 +72,32 @@ sudo apt install software-properties-common -y
 
 sudo apt install pulseaudio alsa-base alsa-utils linux-sound-base gstreamer1.0-pulseaudio gstreamer1.0-alsa libpulse-dev libvorbis-dev -y
 
+sudo apt install fail2ban -y
 
-# Install UBUNTU-MATE desktop environment as default for Guacamole RDP User to work with.
+# the following is a work-around for a problem with the avahi-daemon in a container
+# source for work-around tip: https://gist.github.com/jpouellet/c0d0698d669f1f364ab3
 
+# note:  some error messages will be displayed but after these statements complete
+#        avahi should be working
+sudo apt install avahi-daemon avahi-utils -y
+sudo systemctl disable avahi-daemon
+sudo systemctl stop avahi-daemon
+sudo apt autoremove
+sudo apt install -f avahi-daemon avahi-utils -y
 
-#========================================================================================
-# 2 ways to install a minimal MATE desktop if the 2nd doesn't work ... comment it out and
-# uncomment the 1st and try it..?
+# avahi should now work ok
 
-sudo add-apt-repository ppa:ubuntu-mate-dev/xenial-mate -y
+#============================================================
+# " Install xfce4 (re xubuntu) into this CN2 container..."
 
-sudo apt update
+# Install a minimal XUBUNTU desktop environment for Guacamole RDP User to work with.
 
-sudo apt upgrade
+sudo apt install xubuntu-desktop -y
 
-sudo apt install lightdm ubuntu-mate-core ubuntu-mate-desktop ubuntu-restricted-extras ubuntu-restricted-addons -y
+# Configure the Xsession file default desktop environment to make ALL future Users default xsession to be xubuntu
 
-echo "Desktop Install Done"
+sudo update-alternatives --set x-session-manager /usr/bin/xfce4-session
 
-# "Configure the Xsession file default desktop environment to make ALL future Users default xsession to be UBUNTU-MATE..."
-
-sudo update-alternatives --set x-session-manager /usr/bin/mate-session
 
 #======================================================================
 # "Install misc useful sw apps/tools for the future users..."
@@ -114,74 +110,34 @@ sudo update-alternatives --set x-session-manager /usr/bin/mate-session
 #======================================================================
 
 sudo apt install openssh-server gdebi nano terminator synaptic wget curl ufw network-manager gedit -y
+sudo apt install ubuntu-restricted-extras ubuntu-restricted-addons -y
 
-# enable ufw
-
-sudo ufw enable
+# enable UFW
+sudo sed -i 's/ENABLED=no/ENABLED=yes/g' /etc/ufw/ufw.conf
 
 #==============================================
 # open certain ports on the ciab-desktop server
 
 sudo ufw allow 22          # ssh
 sudo ufw allow 8080        # http
+sudo ufw allow 80
 sudo ufw allow https       
-sudo ufw allow 3389        # rdp
 sudo ufw allow 4822        # guacd
+sudo ufw allow 3389        # rdp
 sudo ufw allow 4713        # pulseaudio
-sudo ufw allow 5353        # avahi
-
-#============================================================================================================
-# The new XRDP 0.9.12 is now the newest also there is no longer an x11rdp it has been replaced
-# by a module called "xorgxrdp" so we will git them both, build them and install them here
 
 
-##################################################################
-#Step 2 - Obtain xrdp packages 
-################################################################## 
+# install xrdp straight from canonical archives into cn2
 
+sudo apt install xrdp -y
 
-#Download the xrdp latest files
-echo "Ready to start the download of xrdp package"
-echo "-------------------------------------------"
-git clone https://github.com/neutrinolabs/xrdp.git
-pushd .
+# sudo dpkg -i /home/$userID/xrdp.deb
+# sudo dpkg -i /home/$userID/x11rdp.deb
 
-##################################################################
-#Step 3 - compiling xrdp packages
-################################################################## 
+# remove systemd xrdp start files as they for some reason don't work right.   This will
+# leave upstart to start xrdp at system boot
 
-echo "Installing and compiling xrdp..."
-echo "--------------------------------"
-cd ./xrdp
-sudo ./bootstrap
-# We can enable more options -- Check Documentation
-sudo ./configure --enable-fuse --enable-jpeg
-sudo make
-sudo make install
-
-##################################################################
-#Step 4 - compiling xorgxrdp packages
-################################################################## 
-
-popd
-
-git clone https://github.com/neutrinolabs/xorgxrdp.git
-
-cd ./xorgxrdp 
-sudo ./bootstrap 
-sudo ./configure 
-sudo make
-sudo make install
-
-
-#=========================================================================================================================
-# enable the xrdp and xrdp-sesman systemd services so xrdp starts when system boots
-
-sudo systemctl enable xrdp.service
-sudo systemctl enable xrdp-sesman.service
-
-
-# sudo rm /lib/systemd/system/xrdp*
+sudo rm /lib/systemd/system/xrdp*
 
 #---------------------------------------------------------------------------------------------
 # In setup-containers.sh we used LXC to copy the ciab-logo.bmp to the $USER (the installers)
@@ -194,32 +150,12 @@ sudo systemctl enable xrdp-sesman.service
 
 # sudo cp /home/$userID/ciab-logo.bmp /usr/local/share/xrdp/ciab-logo.bmp
 
-# We are going to add Pulseaudo TCP load module to both system.pa and default.pa.   That way it doesn't matter if pulseaudio
-# is configured to run in default "per user" mode or in the "system wide" mode.
-
-# if running Pulseaudio in normal "per user" mode...
-sudo echo "load-module module-native-protocol-tcp" | sudo tee -a /etc/pulse/default.pa
-sudo echo "load-module module-xrdp-sink" | sudo tee -a /etc/pulse/default.pa
-sudo echo "load-module module-xrdp-source"| sudo tee -a /etc/pulse/default.pa
-
-# if running Pulseaudio in "system" mode...
-sudo echo "load-module module-native-protocol-tcp" | sudo tee -a /etc/pulse/system.pa
-sudo echo "load-module module-xrdp-sink" | sudo tee -a /etc/pulse/system.pa
-sudo echo "load-module module-xrdp-source"| sudo tee -a /etc/pulse/system.pa
-
 #=================================================================================================
 # change browsers to chromium-browser by installing it & removing firefox.  
 # we do this because chromium is the basis of Chrome has been shown to have the better performance 
 # with Guacamole
 
-# NOTE: for some reason we have to install flashplugin-installer in the container first before
-#       installing adobe-flashplugin.   There MUST be something flashplugin-installer installs
-#       or changes that adobe-flashplugin doesn't because installing adobe-flashplugin alone
-#       causes the browser to just spin when for instance you try to play a youtube video
-#          Also, note that installing adobe-flashplugin will remove flashplugin-installer but
-#       I guess it doesn't remove whatever this critical setting is  ???? go figure ???
 
-sudo apt install flashplugin-installer -y
 sudo apt install chromium-browser adobe-flashplugin -y
 sudo apt remove firefox -y
 
@@ -242,18 +178,62 @@ sudo sed -i 's/#EXTRA_GROUPS="dialout cdrom floppy audio video plugdev users"/EX
 sudo sed -i 's/#ADD_EXTRA_GROUPS=1/ADD_EXTRA_GROUPS=1/' /etc/adduser.conf
 
 # copy our custom built pulseaudio drivers for xrdp/freerdp to the correct directory
-# In ubuntu 16.04 this is pulseaudio 8.0. 
+# For Ubuntu 16.04 this willl be Pulseaudio 8.0
 
 sudo mv /home/$userID/module-xrdp*.so   /usr/lib/pulse-8.0/modules
 sudo chown root:root /usr/lib/pulse-8.0/modules/module-xrdp*.so
 sudo chmod 644 /usr/lib/pulse-8.0/modules/module-xrdp*.so
 
-# make sure the "installing" user is a member of audio/pulse/pulse-access groups
-# any users added later via the CLI by the Admin will automatically be added to these "groups"
+# make sure the installing user is a member of audio/pulse/pulse-access groups
 
 sudo adduser $userID pulse
 sudo adduser $userID pulse-access
 sudo adduser $userID audio
+
+#---------------------------------------------------------------------------------------------------------------
+# add the command "export PULSE_SERVER=10.0.3.1"  to the installer/user acct in the container CN1
+# Later when that user logs into the container... that PULSE_SERVER environment variable will be set
+# and REDIRECT any sound generated in the container to 10.0.3.1 which from the container CN1's perspective
+# is the HOST it is running in.
+#
+# Important Note:  later if you add additional User accounts to the LXC container you will need to add this
+#                  statement to those userID .bashrc files as well.
+#---------------------------------------------------------------------------------------------------------------
+
+sudo echo "export PULSE_SERVER=10.0.3.1" | tee -a /home/$userID/.bashrc
+
+#---------------------------------------------------------------------------------------------------------------
+# we need to add the export PULSE_SERVER-10.0.3.1 to the /opt/google/chrome/google-chrome script 
+# file that is run when you execute chrome from the Ubuntu menu instead of starting it from a command prompt
+# when you start it from a command prompt the actual /opt/google/chrome/chrome binary runs
+# when you start chrome from the Ubuntu menu... the /opt/google/chrome/google-chrome script runs... 
+# then invokes the actual chrome binary.   
+#   We need the google-chrome script to have the same PULSE_SERVER=10.0.3.1 environment
+# variable as the User's .bashrc has
+#
+# Note:  I'm not sure if this difference in starting chrome via the menu & the command line is a bug or not
+#        but I am going to submit it as Bug as I think both methods of starting firefox should run with the
+#        same User Environment variables - not different ones.   In the meantime, some of the next commands
+#        are workarounds, inserting the 'export PULSE_SERVER=10.0.3.1' to the /opt/google/chrome/google-chrome
+#---------------------------------------------------------------------------------------------------------------
+
+# the original google-chrome script file is this one...
+#oldfile=/opt/google/chrome/google-chrome
+
+# save the original
+#sudo cp $oldfile $oldfile.orig
+
+# we will use SED to add our PULSE_SERVER statement to the original google-chromes script but save the change to google-chrome.new
+#newfile=/opt/google/chrome/google-chrome.new
+
+# Now in google-chrome script file we append after its "!/bin/sh" the export statement and redirect that to a new 
+# copy of the google-chrome script filw which we will call google-chrome.new
+#sudo sed '/bin\/bash/a export PULSE_SERVER=10.0.3.1' $oldfile > $newfile
+
+# now we replace google-chrome with the google-chrome.new file and we should be all set
+#sudo mv $newfile $oldfile
+# and make sure the new firefox.sh is executable
+#sudo chmod +x $oldfile
 
 #=======================================
 # Clean up some things before exiting...
@@ -262,9 +242,9 @@ sudo apt-get autoremove -y
 
 #
 #
-# "Mate Desktop Environment installation in CN1 is finished.."
+# "Xubuntu Desktop Environment installation in CN2 is finished.."
 #
-# "*** Remember to create some UserID's in the LXC container CN1 for your CIAB Desktop users ! "
+# "*** Remember to create some UserID's in Container CN2 for your CIAB Remote Desktop users ! "
 #
 #
 #

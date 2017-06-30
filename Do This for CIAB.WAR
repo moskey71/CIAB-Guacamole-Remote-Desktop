@@ -1,0 +1,7 @@
+copy guacamole.war to ciab.war
+use archive manager to open it & the "translations" folder.
+
+Change the NAME entry to say this.
+
+      "NAME" : "Welcome to CIAB Desktop"
+
