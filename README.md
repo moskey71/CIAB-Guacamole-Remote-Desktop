@@ -1,4 +1,7 @@
-# Guacamole with Tomcat8, NGINX, MySQL, XRDP/X11RDP and LXD Containers for Clientless (browser only) Linux Remote Desktop
+# UPDATED - Guacamole with Tomcat8, NGINX, MySQL, XRDP/XORGRDP & LXD Containers for Clientless (browser only) Linux Remote Desktop
+
+This update includes the latest version of Guacamole (v0.9.12) and the latest version of NeutrinoLabs XRDP (v0.9.2).  Also, this version of XRDP replaces the old X11XRDP module with XORGXRDP.   Both XRDP and XORGXRDP are now built from source during installation on both the HOST server and in the LXD Container.
+
 Guacamole HTML5 remote Desktop installation scripts utilizing Tomcat8, Nginx, Mysql and Ubuntu LXD containers to provide Ubuntu-Mate Desktops Remotely using only a Browser.
 
 This collection of files when copied to a target Ubuntu 16.04 server (Cloud, VM or Physical server) will, when run as documented in the **README.PDF**, install and configure Guacamole clientless Remote Desktop gateway to enable users to access Remote Desktops off of the target Ubuntu 16.04 Server using only a HTML5 browser.
