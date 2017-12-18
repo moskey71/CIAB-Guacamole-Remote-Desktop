@@ -23,7 +23,11 @@
 # note:  the guac_ver MUST match the version of the guacamole.war file you want to use that you find on the
 #        site:  http://sourceforge.net/projects/guacamole/files/current/binary/
 
-GUAC_VER=0.9.12-incubating
+
+GUAC_MIRROR="http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/0.9.13-incubating"
+
+GUAC_VER=0.9.13-incubating
+
 MYSQL_CONNECTOR_VERSION=5.1.38
 
 # enable install of new PPAs by adding add-apt-repository capablity to apt-get
@@ -79,6 +83,9 @@ MYHOST=$(hostname -f)
 # Generate random string for passwords and directory names
 genrand () { cat /dev/urandom | tr -dc '0-9A-Za-z+=_' | fold -w $1 | head -n 1 ; }
  
+# add spice-vdagent - in case we are installing in kvm - this enables cut & paste
+
+sudo apt install spice-vdagent -y
  
 # Create temp directory for downloads. Uses genrand() to create random string
 tmpdir=$(genrand 32)
@@ -171,7 +178,9 @@ apt install --fix-missing
 echo "Downloading and configuring guacamole.."
 
 #Fetch/compile/install guacamole-server-version defined in variable GUAC_VER
-wget -O guacamole-server-$GUAC_VER.tar.gz http://sourceforge.net/projects/guacamole/files/current/source/guacamole-server-$GUAC_VER.tar.gz
+
+# Download Guacamole Files from Preferred Mirror
+wget -O guacamole-server-0.9.13-incubating.tar.gz ${GUAC_MIRROR}/source/guacamole-server-0.9.13-incubating.tar.gz
 
 tar -zxvf guacamole-server-$GUAC_VER.tar.gz
 
@@ -184,14 +193,19 @@ make install
 ldconfig
 
 #Fetch / install client, JDBC-auth and mysql connectors 
-mkdir -p /var/lib/guacamole && cd /var/lib/guacamole/
-wget http://sourceforge.net/projects/guacamole/files/current/binary/guacamole-$GUAC_VER.war -O guacamole.war
+
+mkdir -p /var/lib/guacamole 
+
+cd /var/lib/guacamole/
+
+wget -O guacamole.war ${GUAC_MIRROR}/binary/guacamole-0.9.13-incubating.war
 
 ln -s /var/lib/guacamole/guacamole.war /var/lib/$TOMCAT_VER/webapps/guacamole.war
 
-mkdir -p ~/$tmpdir/guacamole/sqlauth && cd ~/$tmpdir/guacamole/sqlauth
+mkdir -p ~/$tmpdir/guacamole/sqlauth 
+cd ~/$tmpdir/guacamole/sqlauth
 
-wget -O guacamole-auth-jdbc-$GUAC_VER.tar.gz http://sourceforge.net/projects/guacamole/files/current/extensions/guacamole-auth-jdbc-$GUAC_VER.tar.gz
+wget -O guacamole-auth-jdbc-$GUAC_VER.tar.gz ${GUAC_MIRROR}/binary/guacamole-auth-jdbc-0.9.13-incubating.tar.gz
 
 tar -zxvf guacamole-auth-jdbc-$GUAC_VER.tar.gz
 
@@ -200,7 +214,9 @@ wget -O mysql-connector-java-$MYSQL_CONNECTOR_VERSION.tar.gz http://dev.mysql.co
 tar -zxf mysql-connector-java-$MYSQL_CONNECTOR_VERSION.tar.gz
 
 mkdir -p /usr/share/$TOMCAT_VER/.guacamole/{extensions,lib}
+
 mv guacamole-auth-jdbc-$GUAC_VER/mysql/guacamole-auth-jdbc-mysql-$GUAC_VER.jar /usr/share/$TOMCAT_VER/.guacamole/extensions/
+
 mv mysql-connector-java-$MYSQL_CONNECTOR_VERSION/mysql-connector-java-$MYSQL_CONNECTOR_VERSION-bin.jar /usr/share/$TOMCAT_VER/.guacamole/lib/
 
 # restart the mysql service
