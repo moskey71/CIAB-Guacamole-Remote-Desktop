@@ -63,8 +63,8 @@ cd $files
 
 echo "deb http://archive.canonical.com/ubuntu xenial partner" | tee -a /etc/apt/sources.list
 echo "deb-src http://archive.canonical.com/ubuntu xenial partner" | tee -a /etc/apt/sources.list
-echo "deb http://us.archive.ubuntu.com/ubuntu/ xenial-backports main restricted universe multiverse" | tee -a /etc/apt/sources.list
-echo "deb-src http://us.archive.ubuntu.com/ubuntu/ xenial-backports main restricted universe multiverse" | tee -a /etc/apt/sources.list
+# echo "deb http://us.archive.ubuntu.com/ubuntu/ xenial-backports main restricted universe multiverse" | tee -a /etc/apt/sources.list
+# echo "deb-src http://us.archive.ubuntu.com/ubuntu/ xenial-backports main restricted universe multiverse" | tee -a /etc/apt/sources.list
 
 
 apt-get update
@@ -78,7 +78,7 @@ apt dist-upgrade -y
 
 #Install miscellaneous
 
-apt install pulseaudio pulseaudio-utils alsa-base alsa-utils linux-sound-base gstreamer1.0-pulseaudio gstreamer1.0-alsa libpulse-dev -y
+apt install pulseaudio pulseaudio-utils alsa-base alsa-utils linux-sound-base gstreamer1.0-pulseaudio gstreamer1.0-alsa libpulse-dev pulseaudio-module-zeroconf -y
 
 
 # Install UBUNTU-MATE desktop environment as default for Guacamole RDP User to work with.
@@ -94,7 +94,7 @@ apt update
 
 apt upgrade -y
 
-apt install lightdm ubuntu-mate-core ubuntu-mate-desktop ufw ubuntu-restricted-extras ubuntu-restricted-addons -y
+apt install lightdm ubuntu-mate-core ubuntu-mate-desktop ufw ubuntu-restricted-extras ubuntu-restricted-addons avahi-daemon -y
 
 echo "Desktop Install Done"
 
@@ -121,7 +121,6 @@ ufw allow 4822        # guacd
 ufw allow 3389        # rdp
 ufw allow 4713        # pulseaudio
 ufw allow 5353        # avahi
-
 
 cd $files
 
@@ -222,44 +221,6 @@ apt remove firefox -y
 sed -i 's/#EXTRA_GROUPS="dialout cdrom floppy audio video plugdev users"/EXTRA_GROUPS="audio pulse pulse-access"/' /etc/adduser.conf
 # make the 2nd change
 sed -i 's/#ADD_EXTRA_GROUPS=1/ADD_EXTRA_GROUPS=1/' /etc/adduser.conf
-
-#===================================================================================================================================
-# NOTE:  the following section does NOT work right.  Maybe someone else can figure out why.
-#        First you either need to create a SystemD init script to auto-start pulseaudio at boot in System Wide mode
-#        -or- after the system boots SUDO SU to root and start pulseaudio in system wide mode (# pulseaudio --system)
-#
-#        However, in either case XRDP does not take Pulseaudio Output (even though PAVUCONTROL shows the XRDP SINK have sound data
-#        in it when played) ... and fails to transfer it to the RDPSND channel that Guacamole utilizes to carry remote audio back
-#        to the Remote Desktop user.
-#
-#        So for now... do not use the following section unless you are wanting to try to fix this (Let me know if you have success).
-#
-# On Host/Server we want Pulseaudio to always be running so we change the /etc/default/pulseaudio file to do that instead of running 
-# only on a per-user basis (ie only when at least 1 user is logged in)
-#
-# To run pulseaudio as a system-wide daemon, we need to edit a few files.
-#
-# 1.) /etc/default/pulseaudio
-#
-#    PULSEAUDIO_SYSTEM_START=1
-#
-# 2.) /etc/pulse/daemon.conf - See man pulse-daemon.conf for more information.
-#
-#    daemonize = yes
-#    local-server-type = system
-#
-# 3.) /etc/pulse/client.conf
-#
-#    autospawn = no
-
-#touch /etc/default/pulseaudio
-#echo "PULSEAUDIO_SYSTEM_START=1" | tee -a /etc/default/pulseaudio
-#echo "DISALLOW_MODULE_LOADING=1" | tee -a /etc/default/pulseaudio
-#echo "daemonize = yes" | tee -a /etc/pulse/daemon.conf
-#echo "local-server-type = system" | tee -a /etc/pulse/daemon.conf
-#echo "autospawn = no" | tee -a /etc/pulse/client.conf
-
-#================={ End of pulseaudio system wide setup section }===================================================================
 
 #=======================================
 # Clean up some things before exiting...

@@ -79,7 +79,7 @@ sudo apt install software-properties-common -y
 
 #Install miscellaneous
 
-sudo apt install pulseaudio alsa-base alsa-utils linux-sound-base gstreamer1.0-pulseaudio gstreamer1.0-alsa libpulse-dev libvorbis-dev -y
+sudo apt install pulseaudio pulseaudio-module-zeroconf alsa-base alsa-utils linux-sound-base gstreamer1.0-pulseaudio gstreamer1.0-alsa libpulse-dev libvorbis-dev -y
 
 
 # Install UBUNTU-MATE desktop environment as default for Guacamole RDP User to work with.
@@ -113,7 +113,7 @@ sudo update-alternatives --set x-session-manager /usr/bin/mate-session
 # "synaptic - so future sudo users can manage sw apps easier"
 #======================================================================
 
-sudo apt install openssh-server gdebi nano terminator synaptic wget curl ufw network-manager gedit -y
+sudo apt install git openssh-server gdebi nano terminator synaptic wget curl ufw network-manager gedit avahi-daemon -y
 
 # enable ufw
 
@@ -202,10 +202,6 @@ sudo echo "load-module module-native-protocol-tcp" | sudo tee -a /etc/pulse/defa
 sudo echo "load-module module-xrdp-sink" | sudo tee -a /etc/pulse/default.pa
 sudo echo "load-module module-xrdp-source"| sudo tee -a /etc/pulse/default.pa
 
-# if running Pulseaudio in "system" mode...
-sudo echo "load-module module-native-protocol-tcp" | sudo tee -a /etc/pulse/system.pa
-sudo echo "load-module module-xrdp-sink" | sudo tee -a /etc/pulse/system.pa
-sudo echo "load-module module-xrdp-source"| sudo tee -a /etc/pulse/system.pa
 
 #=================================================================================================
 # change browsers to chromium-browser by installing it & removing firefox.  

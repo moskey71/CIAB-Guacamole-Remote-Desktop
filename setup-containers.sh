@@ -170,7 +170,7 @@ echo
 # Launch an Ubuntu xenial 16.04 64 bit containers and name it cn1.  We are launching CN1 as a
 # PRIVILEGED container:
 
-lxc launch images:ubuntu/xenial/amd64 cn1 -c security.privileged=true
+lxc launch images:ubuntu/xenial/amd64 cn1 
 
 # set LXC container CN1 to autostart when the Host is rebooted
 
@@ -234,11 +234,6 @@ echo "load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1;$lxdbr0_subne
 echo "load-module module-xrdp-sink" | sudo tee -a /etc/pulse/default.pa
 echo "load-module module-xrdp-source"| sudo tee -a /etc/pulse/default.pa
 
-# if running Pulseaudio in "system" mode...
-echo "load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1;$lxdbr0_subnet auth-anonymous=1" | sudo tee -a /etc/pulse/system.pa
-echo "load-module module-xrdp-sink" | sudo tee -a /etc/pulse/system.pa
-echo "load-module module-xrdp-source"| sudo tee -a /etc/pulse/system.pa
-
 #---------------------------------------------------------------------------------------------------------------
 # with the above done any future userID's created will inherit the environment variable PULSE_SERVER=X.X.X.X
 # from /etc/bash.bashrc when they log in.
@@ -296,10 +291,6 @@ cd $files
 
 lxc file push ./mk-cn1-environment.sh cn1/home/$USER/
 
-# push the 2 xrdp .DEB files to cn1
-#lxc file push ./xrdp.deb cn1/home/$USER/
-#lxc file push ./x11rdp.deb cn1/home/$USER/
-
 # push the xrdp pulseaudio drivers into the containers
 lxc file push ./module-xrdp*.so   cn1/home/$USER/
 
@@ -347,91 +338,41 @@ echo
 # note: we pass $USER to the mk-cn1-environment.sh script so it can use it also
 lxc exec cn1 -- /bin/bash -c "/home/$USER/mk-cn1-environment.sh $USER" 
 
-echo
-echo "Next we will Clone/Copy the CN1 container to a 2nd container called CN2..."
-echo 
-echo "Notice: using LXD the Clone/Copy only takes about 1 minute compared to the time it took to create the"
-echo "        CN1 container initially.   This is just one of the benefits of LXD/LXC !"
-echo
-echo "        Cloning/Copying an existing container even a hundred times is a relatively fast process..."
-echo
-
-# Next we stop Container CN1 so we can copy/clone it to a new container CN2
-lxc stop cn1
-lxc copy cn1 cn2 
-
-# restart CN1 
-lxc start cn1
-
-# set LXC container CN2 to autostart when the Host is rebooted
-lxc config set cn2 boot.autostart 1
-
-# Start container CN2
-lxc start cn2
-
-# Because we cloned CN1 to make CN2... CN2's hostname will still be 'CN1'.   
-# We need to change CN2's hostname to CN2.
-
-lxc exec cn2 -- /bin/bash -c "sed -i 's/cn1/cn2/' /etc/hostname"
-
-# now when CN1 and CN2 are rebooted below CN2 will restart with 'CN2' as its hostname
-
 # Next to prevent a problem with XRDP's use of pulseaudio we will comment out the statement
 # in /etc/xrdp/sesman.ini that sets an Environment variable PULSE_SCRIPT for each logged in
 # user to point to xrdp's default.pa file ... which prevents the Host's own pulseaudio
 # /etc/pulse/default.pa file from being executed.
-# We will do this in both CN1 and CN2 containers and in the HOST
+# We will do this in the CN1 and in the HOST
 
 # do host first
 sudo sed -i 's/PULSE_SCRIPT/#PULSE_SCRIPT/' /etc/xrdp/sesman.ini
 
-# then both containers...
-lxc exec cn1 -- /bin/bash -c "sed -i 's/PULSE_SCRIPT/#PULSE_SCRIPT/' /etc/xrdp/sesman.ini"
-lxc exec cn2 -- /bin/bash -c "sed -i 's/PULSE_SCRIPT/#PULSE_SCRIPT/' /etc/xrdp/sesman.ini"
-
 # Now because of an apport bug that causes recurring error msgs to pop up on each login let's
-# disable apport on host, cn1 and cn2
+# disable apport on host and cn1
 
 # on host
 sudo sed -i 's/enabled=1/enabled=0/' /etc/default/apport
 
-# in both containers
+# in the container disable apport so it doesn't bug users with bogus apport msgs
+
 lxc exec cn1 -- /bin/bash -c "sed -i 's/enabled=1/enabled=0/' /etc/default/apport"
-lxc exec cn2 -- /bin/bash -c "sed -i 's/enabled=1/enabled=0/' /etc/default/apport"
-
-
-echo "LXD container CN2 has been created!  Was that quick or what?"
-echo
-echo 
-echo
-echo "LXD/LXC containers cn1 and cn2 should be running now with Ubuntu-Mate in both CN1 and CN2!"
-echo
-echo "Both containers should be rebooted to make sure each starts up correctly that xrdp is started okay."
-echo
-read -p "Press any key to continue..."
-echo
-echo
 
 echo "Rebooting cn1..."
-lxc exec cn1 -- /bin/bash -c "shutdown -r now"
-echo
-echo "Rebooting cn2..."
-lxc exec cn2 -- /bin/bash -c "shutdown -r now"
-echo
+lxc restart cn1
+
 echo
 
 # lets list the LXC containers just to check 
 echo
-echo " Check to see if cn1 and cn2 rebooted...and restarted okay."
+echo " Check to see if cn1 rebooted...and restarted okay."
 echo
-echo " When the listing of LXD/LXC containers appears write down the IP address of CN1 and CN2 !"
+echo " When the listing of LXD/LXC containers appears write down the IP address of CN1 !"
 echo
 echo " You will need those IP addresses later when you first login to Guacamole and configure"
-echo " 'connections' to CN1 and CN2 so users can access them and their respective Desktop Environments."
+echo " 'connections' to CN1 so users can access them and the Desktop Environments."
 echo
 
-
-# wait 15 seconds for LXC containers to start back up then list them for the User
+# wait 15 seconds for LXC container to start back up then list them for the User
 
 sleep 15
 lxc list
