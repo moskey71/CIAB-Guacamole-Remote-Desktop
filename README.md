@@ -24,7 +24,7 @@ Example:
 
 > https://ip_address_of_server/guacamole
 
-Assuming they have had a Guacamole login created for they will log into Guacamole first and be presented with 1 or more Remote Desktop Server/Host "connections" the Guacamole Admin has created and enable for their account.
+Assuming they have had a Guacamole login created for them they will log into Guacamole first and be presented with 1 or more Remote Desktop Server/Host "connections" the Guacamole Admin has created and enable for their account.
 
 Choosing to log into the Ubuntu Server/Host connection a user will next be presented with the XRDP login screen.    
 
