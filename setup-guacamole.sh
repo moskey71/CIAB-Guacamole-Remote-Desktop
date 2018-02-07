@@ -24,9 +24,9 @@
 #        site:  http://sourceforge.net/projects/guacamole/files/current/binary/
 
 
-GUAC_MIRROR="http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/0.9.13-incubating"
+GUAC_MIRROR="http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/0.9.14-incubating"
 
-GUAC_VER=0.9.13-incubating
+GUAC_VER=0.9.14-incubating
 
 MYSQL_CONNECTOR_VERSION=5.1.38
 
@@ -180,7 +180,7 @@ echo "Downloading and configuring guacamole.."
 #Fetch/compile/install guacamole-server-version defined in variable GUAC_VER
 
 # Download Guacamole Files from Preferred Mirror
-wget -O guacamole-server-0.9.13-incubating.tar.gz ${GUAC_MIRROR}/source/guacamole-server-0.9.13-incubating.tar.gz
+wget -O guacamole-server-0.9.14-incubating.tar.gz ${GUAC_MIRROR}/source/guacamole-server-0.9.14-incubating.tar.gz
 
 tar -zxvf guacamole-server-$GUAC_VER.tar.gz
 
@@ -198,14 +198,14 @@ mkdir -p /var/lib/guacamole
 
 cd /var/lib/guacamole/
 
-wget -O guacamole.war ${GUAC_MIRROR}/binary/guacamole-0.9.13-incubating.war
+wget -O guacamole.war ${GUAC_MIRROR}/binary/guacamole-0.9.14-incubating.war
 
 ln -s /var/lib/guacamole/guacamole.war /var/lib/$TOMCAT_VER/webapps/guacamole.war
 
 mkdir -p ~/$tmpdir/guacamole/sqlauth 
 cd ~/$tmpdir/guacamole/sqlauth
 
-wget -O guacamole-auth-jdbc-$GUAC_VER.tar.gz ${GUAC_MIRROR}/binary/guacamole-auth-jdbc-0.9.13-incubating.tar.gz
+wget -O guacamole-auth-jdbc-$GUAC_VER.tar.gz ${GUAC_MIRROR}/binary/guacamole-auth-jdbc-0.9.14-incubating.tar.gz
 
 tar -zxvf guacamole-auth-jdbc-$GUAC_VER.tar.gz
 
