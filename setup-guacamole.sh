@@ -20,15 +20,19 @@
  
 # Variables for guacamole/mysql connector versions are set here.  As of 3/10/2016 these are the latest versions.
 
-# note:  the guac_ver MUST match the version of the guacamole.war file you want to use that you find on the
+# note:  the {GUAC_VER} MUST match the version of the guacamole.war file you want to use that you find on the
 #        site:  http://sourceforge.net/projects/guacamole/files/current/binary/
 
 
 GUAC_MIRROR="http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/0.9.14"
 
-GUAC_VER=0.9.14
+GUAC_VER="0.9.14"
 
-MYSQL_CONNECTOR_VERSION=5.1.38
+MYSQL_CONNECTOR_VER="5.1.45"
+
+# Set Tomcat version to the latest for the target Ubuntu distribution
+
+TOMCAT_VER=tomcat8
 
 # enable install of new PPAs by adding add-apt-repository capablity to apt-get
 apt-get install software-properties-common -y
@@ -55,17 +59,6 @@ apt  install lsb-release -y || { echo "Unsupported distribution. Aborting instal
  
 # fetch the codename of the distribution (eg: trusty,wily,wheezy,jessie)
 DISTVER=$(lsb_release -c | cut -d':' -f 2 | sed 's/[[:space:]]//g')
- 
-# Set Tomcat version depending on which distribution version else exit script
-case $DISTVER in
-    xenial)
-        TOMCAT_VER=tomcat8
-        ;;
-    *)
-    echo "Unsupported distribution. Sorry. Installation aborted"
-    echo "Script works on Ubuntu (trusty,wily) and Debian (wheezy,jessie)"
-    exit 1;
-esac
  
 # Set environment to non-interactive
 export DEBIAN_FRONTEND="noninteractive"
@@ -143,8 +136,8 @@ apt update && apt upgrade -y
 #Install required dependencies
 echo "Installing packages"
 # Tomcat version is determined by distro 
-apt install $TOMCAT_VER -y
-apt install $TOMCAT_VER-admin $TOMCAT_VER-docs -y
+apt install ${TOMCAT_VER} -y
+apt install ${TOMCAT_VER}-admin ${TOMCAT_VER}-docs -y
 
 # install Ghostscript so printing will work
 apt install freerdp-x11 ghostscript -y
@@ -177,14 +170,14 @@ apt install --fix-missing
 # Fetch and install guacamole server and client
 echo "Downloading and configuring guacamole.."
 
-#Fetch/compile/install guacamole-server-version defined in variable GUAC_VER
+#Fetch/compile/install guacamole-server-version defined in variable {GUAC_VER}
 
 # Download Guacamole Files from Preferred Mirror
 wget -O guacamole-server-0.9.14.tar.gz ${GUAC_MIRROR}/source/guacamole-server-0.9.14.tar.gz
 
-tar -zxvf guacamole-server-$GUAC_VER.tar.gz
+tar -zxvf guacamole-server-${GUAC_VER}.tar.gz
 
-cd guacamole-server-$GUAC_VER/
+cd guacamole-server-${GUAC_VER}/
 ./configure --with-init-dir=/etc/init.d
 
 make
@@ -198,26 +191,26 @@ mkdir -p /var/lib/guacamole
 
 cd /var/lib/guacamole/
 
-wget -O guacamole.war ${GUAC_MIRROR}/binary/guacamole-0.9.14war
+wget -O guacamole.war ${GUAC_MIRROR}/binary/guacamole-0.9.14.war
 
-ln -s /var/lib/guacamole/guacamole.war /var/lib/$TOMCAT_VER/webapps/guacamole.war
+ln -s /var/lib/guacamole/guacamole.war /var/lib/${TOMCAT_VER}/webapps/guacamole.war
 
 mkdir -p ~/$tmpdir/guacamole/sqlauth 
 cd ~/$tmpdir/guacamole/sqlauth
 
-wget -O guacamole-auth-jdbc-$GUAC_VER.tar.gz ${GUAC_MIRROR}/binary/guacamole-auth-jdbc-0.9.14.tar.gz
+wget -O guacamole-auth-jdbc-${GUAC_VER}.tar.gz ${GUAC_MIRROR}/binary/guacamole-auth-jdbc-0.9.14.tar.gz
 
-tar -zxvf guacamole-auth-jdbc-$GUAC_VER.tar.gz
+tar -zxvf guacamole-auth-jdbc-${GUAC_VER}.tar.gz
 
-wget -O mysql-connector-java-$MYSQL_CONNECTOR_VERSION.tar.gz http://dev.mysql.com/get/Downloads/Connector/j/mysql-connector-java-$MYSQL_CONNECTOR_VERSION.tar.gz
+wget -O mysql-connector-java-${MYSQL_CONNECTOR_VER}.tar.gz http://dev.mysql.com/get/Downloads/Connector/j/mysql-connector-java-${MYSQL_CONNECTOR_VER}.tar.gz
 
-tar -zxf mysql-connector-java-$MYSQL_CONNECTOR_VERSION.tar.gz
+tar -zxf mysql-connector-java-${MYSQL_CONNECTOR_VER}.tar.gz
 
-mkdir -p /usr/share/$TOMCAT_VER/.guacamole/{extensions,lib}
+mkdir -p /usr/share/${TOMCAT_VER}/.guacamole/{extensions,lib}
 
-mv guacamole-auth-jdbc-$GUAC_VER/mysql/guacamole-auth-jdbc-mysql-$GUAC_VER.jar /usr/share/$TOMCAT_VER/.guacamole/extensions/
+mv guacamole-auth-jdbc-${GUAC_VER}/mysql/guacamole-auth-jdbc-mysql-${GUAC_VER}.jar /usr/share/${TOMCAT_VER}/.guacamole/extensions/
 
-mv mysql-connector-java-$MYSQL_CONNECTOR_VERSION/mysql-connector-java-$MYSQL_CONNECTOR_VERSION-bin.jar /usr/share/$TOMCAT_VER/.guacamole/lib/
+mv mysql-connector-java-${MYSQL_CONNECTOR_VER}/mysql-connector-java-${MYSQL_CONNECTOR_VER}-bin.jar /usr/share/${TOMCAT_VER}/.guacamole/lib/
 
 # restart the mysql service
 service mysql restart
@@ -232,7 +225,7 @@ flush privileges;
  
 END
  
-cd ~/$tmpdir/guacamole/sqlauth/guacamole-auth-jdbc-$GUAC_VER/mysql/schema/
+cd ~/$tmpdir/guacamole/sqlauth/guacamole-auth-jdbc-${GUAC_VER}/mysql/schema/
 cat ./*.sql | mysql --host=localhost --user=root --password=$MYSQL_ROOT_PASSWD guacdb
  
 # Create guacamole.properties file
@@ -249,7 +242,7 @@ mysql-disallow-duplicate-connections: false
  
 EOG
  
-ln -s /etc/guacamole/guacamole.properties /usr/share/$TOMCAT_VER/.guacamole/
+ln -s /etc/guacamole/guacamole.properties /usr/share/${TOMCAT_VER}/.guacamole/
  
 # Change default guacadmin password in guacdb
 mysql --host=localhost --user=root --password=$MYSQL_ROOT_PASSWD << END
@@ -278,15 +271,13 @@ fi
 mkdir /usr/lib/$ARCH-linux-gnu/freerdp/
 ln -s /usr/local/lib/freerdp/guac*.so /usr/lib/$ARCH-linux-gnu/freerdp/
 
+#========================
 # Adding startup services
-case $DISTVER in
-    xenial)
-        systemctl enable $TOMCAT_VER
-        systemctl enable mysql
-        systemctl enable guacd
-        ;;
-    *)
-esac
+
+systemctl enable ${TOMCAT_VER}
+systemctl enable mysql
+systemctl enable guacd
+
  
 ## Cleaning up
 cd ~
