@@ -21,7 +21,7 @@ if ! [ $(id -u) = 0 ]; then echo "Please run this script as either SUDO or ROOT 
 #
 # This script can be run on any Ubuntu cloud/local server, pc, or even on a VM (KVM or VirtualBox) and also in an LXC container.
 #
-# Technologies involved include:  guacamole, xrdp, x11rdp, tomcat8, mysql, nginx, lxc and ubuntu
+# Technologies involved include:  guacamole, xrdp, xorgxrdp, tomcat8, mysql, nginx, lxc and ubuntu
 #
 # Note:  you should run this setup.sh script as from "some" user (re user you created) home directory
 #        When done it will have placed several tar.gz files as well as several new directories in that home directory.  You should be
@@ -80,9 +80,7 @@ apt dist-upgrade -y
 
 apt install pulseaudio pulseaudio-utils alsa-base alsa-utils linux-sound-base gstreamer1.0-pulseaudio gstreamer1.0-alsa libpulse-dev pulseaudio-module-zeroconf -y
 
-
 # Install UBUNTU-MATE desktop environment as default for Guacamole RDP User to work with.
-
 
 #========================================================================================
 # 2 ways to install a minimal MATE desktop if the 2nd doesn't work ... comment it out and
@@ -134,7 +132,7 @@ cp ./module-xrdp*.so   /usr/lib/pulse-8.0/modules
 
 
 #============================================================================================================
-# The new XRDP 0.9.12 is now the newest also there is no longer an x11rdp it has been replaced
+# The new XRDP 0.9.5.x is now the newest also there is no longer an x11rdp it has been replaced
 # by a module called "xorgxrdp" so we will git them both, build them and install them here
 
 
@@ -172,13 +170,11 @@ sudo make install
 cd $files
 git clone https://github.com/neutrinolabs/xorgxrdp.git
 
-
 cd $files/xorgxrdp 
 sudo ./bootstrap 
 sudo ./configure 
 sudo make
 sudo make install
-
 
 #=========================================================================================================================
 # enable the xrdp and xrdp-sesman systemd services so xrdp starts up when ubuntu boots
@@ -193,9 +189,6 @@ sudo systemctl enable xrdp-sesman.service
 # first make sure the directory exists... it should but just in case
 
 cd $files
-# mkdir /usr/local/share/xrdp
-# cp ./ciab-logo.bmp /usr/local/share/xrdp/ciab-logo.bmp
-
 
 #====================================================================================================
 # change browsers to chromium/chrome bin installing chromium-browser & removing firefox.  
